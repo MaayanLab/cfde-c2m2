@@ -1,0 +1,22 @@
+[project]
+name = "cfde-c2m2"
+version = "0.1.0"
+description = "Utilities for preparing C2M2 tables"
+authors = [
+    {name = "CFDE DRC <help@cfde.cloud>"}
+]
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "click (>=8.2.1,<9.0.0)",
+    "frictionless (>=5.18.1,<6.0.0)",
+    "tqdm (>=4.67.1,<5.0.0)",
+    "requests (>=2.32.4,<3.0.0)"
+]
+
+[tool.poetry.scripts]
+cfde-c2m2 = 'cfde_c2m2.__main__:cli'
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
