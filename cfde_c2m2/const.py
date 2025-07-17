@@ -1,6 +1,7 @@
 SCHEMA_URL = 'https://osf.io/download/3sra4/'
 SCHEMA_FILENAME = 'C2M2_datapackage.json'
 INDEX_FILENAME = 'C2M2_datapackage.sqlite'
+PACKAGE_FILENAME = 'C2M2_datapackage.zip'
 
 # TODO: let's create this service
 OLS_URL = None#'https://ols.cfde.cloud'

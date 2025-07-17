@@ -16,6 +16,9 @@ cfde-c2m2 prepare
 # verify integrity of your package
 cfde-c2m2 validate
 
+# zip the necessary files for a bare minimum package
+cfde-c2m2 package
+
 # Coming Soon: submit to DRC portal
 cfde-c2m2 submit
 ```
