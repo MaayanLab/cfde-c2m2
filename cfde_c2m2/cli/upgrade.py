@@ -38,9 +38,9 @@ def upgrade():
         #
         click.echo(f"[{resource.name}]: upgrading")
         with resource_path.with_suffix('.tmp').open('w') as fw:
-          writer = csv.DictWriter(fw, fieldnames=schema_columns, delimiter='\t', doublequote=False)
+          writer = csv.DictWriter(fw, fieldnames=schema_columns, dialect='excel-tab', quoting=csv.QUOTE_NONE, quotechar=None)
           writer.writeheader()
-          reader = csv.DictReader(fr, fieldnames=current_columns, delimiter='\t', doublequote=False)
+          reader = csv.DictReader(fr, fieldnames=current_columns, dialect='excel-tab', quoting=csv.QUOTE_NONE, quotechar=None)
           for record in tqdm(reader, desc=f"[{resource.name}]: upgrading"):
             for column in add_columns:
               record[column] = None
