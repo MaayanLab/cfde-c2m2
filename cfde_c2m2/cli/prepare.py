@@ -9,16 +9,6 @@ from urllib.parse import quote
 from tqdm import tqdm
 from frictionless import Package
 
-def iri_resolve(resource, iri):
-  try:
-    if not const.OLS_URL: raise NotImplementedError('OLS is not yet implemented')
-    req = requests.get(f"{const.OLS_URL}/{resource}/{quote(iri)}")
-    req.raise_for_status()
-    return req.json()
-  except Exception as e:
-    click.echo(f"[{resource}]: {iri}\n{traceback.format_exc()}")
-    return { 'id': iri, 'name': iri, 'description': '' }
-
 def prepare():
   ''' Finish preparing your c2m2 submission, filling in any blanks and resolving ontological identifiers
   '''
@@ -55,17 +45,37 @@ def prepare():
     with utils.OpenDictWriter(resource_path.with_suffix('.tmp'), fieldnames=[field.name for field in resource.schema.fields]) as writer:
       rc_ids = pathlib.Path(f"{resource.name}.ids.tsv")
       if rc_ids.exists():
-        ids = set()
-        with utils.OpenDictReader(f"{resource.name}.ids.tsv") as reader:
-          for row in tqdm(reader, desc=f"[{resource.name}]: resolving ontology IRIs..."):
-            if row['id'] in ids: continue
-            if row['id'] in existing_iris:
-              writer.writerow(existing_iris[row['id']])
-            else:
-              writer.writerow(iri_resolve(resource.name, row['id']))
-            ids.add(row['id'])
+        with utils.OpenDictWriter(resource_path.with_suffix('.get'), fieldnames=['id'], writeheader=False) as to_get:
+          ids = set()
+          to_get_any = False
+          with utils.OpenDictReader(f"{resource.name}.ids.tsv") as reader:
+            for row in tqdm(reader, desc=f"[{resource.name}]: resolving ontology IRIs..."):
+              if row['id'] in ids: continue
+              if row['id'] in existing_iris:
+                writer.writerow(existing_iris[row['id']])
+              else:
+                # we don't have this one? we need to get it
+                to_get_any = True
+                to_get.writerow(row['id'])
+              ids.add(row['id'])
+          #
+          rc_ids.unlink()
         #
-        rc_ids.unlink()
+        # any IRIs to find?
+        if to_get_any:
+          import requests, csv
+          # we submit the file of ids to the OLS API bulk-by-id endpoint
+          #  it returns the records
+          with resource_path.with_suffix('.get').open('rb') as fr:
+            res = requests.post(f"{const.OLS_URL}/api/v1/bulk-by-id/{resource.name}", data=fr, stream=True)
+            res.raise_for_status()
+            fr = res.iter_lines()
+            columns = next(fr)
+            reader = csv.DictReader(fr, fieldnames=columns, dialect='excel-tab', quoting=csv.QUOTE_NONE, quotechar=None)
+            writer.writerows(reader)
+        #
+        resource_path.with_suffix('.get').unlink()
+
     resource_path.with_suffix('.tmp').rename(resource_path)
 
 cli.command()(prepare)
