@@ -39,6 +39,59 @@ def validate_fks(schema, index, max_errors=100):
     #
     return valid
 
+def validate_unique_persistent_ids(schema, index, max_errors=100):
+  import sqlite3
+  from frictionless import Package
+  pkg = Package(schema)
+  with sqlite3.connect(index) as con:
+    cur = con.cursor()
+    valid = True
+    tables = {
+      rc.name
+      for rc in pkg.resources
+      if any(field.name == 'persistent_id' for field in rc.schema.fields)
+    }
+    # checking non-unique persistent ids
+    query = f"""
+      select persistent_id, count(persistent_id) as count, group_concat(tbl) as tables
+      from (
+      {' union '.join(f"select persistent_id, '{table}' as tbl from {table} where persistent_id is not null" for table in tables)}
+      ) t
+      group by t.persistent_id
+      having count(persistent_id) > 1
+      order by count(persistent_id) desc
+      limit {max_errors}
+      ;
+    """
+    for persistent_id, count, tables in cur.execute(query):
+      valid = False
+      click.echo(f"[{tables}]: {persistent_id} duplicated {count} times")
+    cur.close()
+    #
+    return valid
+
+def validate_persistent_id_checksums(schema, index, max_errors=100):
+  import sqlite3
+  from frictionless import Package
+  pkg = Package(schema)
+  with sqlite3.connect(index) as con:
+    cur = con.cursor()
+    valid = True
+    # checking missing checksums when persistent_id is not
+    query = f"""
+      select id_namespace, local_id
+      from file
+      where persistent_id is not null
+      and (sha256 is null and md5 is null)
+      limit {max_errors}
+      ;
+    """
+    for id_namespace, local_id in cur.execute(query):
+      valid = False
+      click.echo(f"[file]: ({id_namespace}, {local_id}) checksum must be present for file with persistent_id defined")
+    #
+    return valid
+
 def validate():
   ''' Validate that your C2M2 submission is valid
   '''
@@ -58,6 +111,14 @@ def validate():
   #
   click.echo(f"Validating foreign key integrity...")
   if not validate_fks(const.SCHEMA_FILENAME, const.INDEX_FILENAME):
+    sys.exit(1)
+  #
+  click.echo(f"Validating uniqueness of persistent ids...")
+  if not validate_unique_persistent_ids(const.SCHEMA_FILENAME, const.INDEX_FILENAME):
+    sys.exit(1)
+  #
+  click.echo(f"Validating checksums on files with persistent ids...")
+  if not validate_persistent_id_checksums(const.SCHEMA_FILENAME, const.INDEX_FILENAME):
     sys.exit(1)
 
 cli.command()(validate)
