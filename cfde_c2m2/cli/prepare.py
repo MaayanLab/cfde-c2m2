@@ -64,10 +64,8 @@ def prepare():
           #  it returns the records
           ontology = const.CV_TABLES()[resource.name]
           writer.writerows(
-            tqdm(
-              ols.bulk_by_id(ontology, resource_path.with_suffix('.get')),
-              desc=f"[{resource.name}]: resolving new IRIs..."
-            )
+            {field.name: record.get(field.name, '') for field in resource.schema.fields}
+            for record in tqdm(ols.bulk_by_id(ontology, resource_path.with_suffix('.get')), desc=f"[{resource.name}]: resolving new IRIs...")
           )
         #
         resource_path.with_suffix('.get').unlink()
