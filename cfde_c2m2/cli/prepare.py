@@ -1,11 +1,8 @@
 from cfde_c2m2.cli import cli
-from cfde_c2m2 import const, utils
+from cfde_c2m2 import const, utils, ols
 import cfde_c2m2.cli.unsimplify
 import pathlib
 import click
-import requests
-import traceback
-from urllib.parse import quote
 from tqdm import tqdm
 from frictionless import Package
 
@@ -19,11 +16,11 @@ def prepare():
   # go through all the tables and write all IRIs to a temporary {rc}.ids.tsv file
   with utils.LazyDictWriters() as writers:
     for resource in package.resources:
-      if resource.name in const.CV_TABLES: continue
+      if resource.name in const.CV_TABLES(): continue
       click.echo(f"[{resource.name}]: analysing")
       fields_to_resolve = {}
       for fk in resource.schema.foreign_keys:
-        if fk['reference']['resource'] in const.CV_TABLES:
+        if fk['reference']['resource'] in const.CV_TABLES():
           fields_to_resolve[utils.one(utils.ensure_list(fk['fields']))] = fk['reference']['resource']
       with resource:
         for row in tqdm(resource.row_stream, desc=f"[{resource.name}]: finding ontology IRIs..."):
@@ -32,7 +29,7 @@ def prepare():
 
   # re-write all the CV tables, re-using already resolved IRIs and resolving any new ones
   for resource in package.resources:
-    if resource.name not in const.CV_TABLES: continue
+    if resource.name not in const.CV_TABLES(): continue
     click.echo(f"[{resource.name}]: preparing")
     resource_path = pathlib.Path(resource.path)
     # load existing iris into memory
@@ -49,30 +46,29 @@ def prepare():
           ids = set()
           to_get_any = False
           with utils.OpenDictReader(f"{resource.name}.ids.tsv") as reader:
-            for row in tqdm(reader, desc=f"[{resource.name}]: resolving ontology IRIs..."):
+            for row in tqdm(reader, desc=f"[{resource.name}]: preserving existing IRIs..."):
               if row['id'] in ids: continue
               if row['id'] in existing_iris:
                 writer.writerow(existing_iris[row['id']])
               else:
                 # we don't have this one? we need to get it
                 to_get_any = True
-                to_get.writerow(row['id'])
+                to_get.writerow(dict(id=row['id']))
               ids.add(row['id'])
           #
           rc_ids.unlink()
         #
         # any IRIs to find?
         if to_get_any:
-          import requests, csv
           # we submit the file of ids to the OLS API bulk-by-id endpoint
           #  it returns the records
-          with resource_path.with_suffix('.get').open('rb') as fr:
-            res = requests.post(f"{const.OLS_URL}/api/v1/bulk-by-id/{resource.name}", data=fr, stream=True)
-            res.raise_for_status()
-            fr = res.iter_lines()
-            columns = next(fr)
-            reader = csv.DictReader(fr, fieldnames=columns, dialect='excel-tab', quoting=csv.QUOTE_NONE, quotechar=None)
-            writer.writerows(reader)
+          ontology = const.CV_TABLES()[resource.name]
+          writer.writerows(
+            tqdm(
+              ols.bulk_by_id(ontology, resource_path.with_suffix('.get')),
+              desc=f"[{resource.name}]: resolving new IRIs..."
+            )
+          )
         #
         resource_path.with_suffix('.get').unlink()
 
