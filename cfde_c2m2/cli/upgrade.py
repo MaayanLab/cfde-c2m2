@@ -17,7 +17,7 @@ def upgrade():
   for resource in package.resources:
     resource_path = pathlib.Path(resource.path)
     if not resource_path.exists():
-      click.echo(f"Creating empty {resource.name}...")
+      click.echo(f"creating empty {resource.name}...")
       resource_path.write_text('\t'.join(
         field.name
         for field in resource.schema.fields
@@ -50,6 +50,6 @@ def upgrade():
       #
       resource_path.with_suffix('.tmp').rename(resource_path)
   #
-  click.echo('upgraded')
+  click.echo('upgraded!')
 
 cli.command()(upgrade)
