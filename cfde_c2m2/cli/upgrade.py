@@ -1,8 +1,7 @@
 from cfde_c2m2.cli import cli
-from cfde_c2m2 import const
+from cfde_c2m2 import const, utils
 import cfde_c2m2.cli.unsimplify
 from frictionless import Package
-import csv
 import click
 import pathlib
 from tqdm import tqdm
@@ -24,7 +23,7 @@ def upgrade():
       ))
     else:
       with resource_path.open('r') as fr:
-        current_columns = fr.readline().rstrip().split('\t')
+        current_columns = fr.readline().rstrip('\r\n').split('\t')
         schema_columns = [field.name for field in resource.schema.fields]
         if current_columns == schema_columns: continue
         #
@@ -38,9 +37,9 @@ def upgrade():
         #
         click.echo(f"[{resource.name}]: upgrading")
         with resource_path.with_suffix('.tmp').open('w') as fw:
-          writer = csv.DictWriter(fw, fieldnames=schema_columns, dialect='excel-tab', quoting=csv.QUOTE_NONE, quotechar=None)
+          writer = utils.JsonDictWriter(fw, fieldnames=schema_columns)
           writer.writeheader()
-          reader = csv.DictReader(fr, fieldnames=current_columns, dialect='excel-tab', quoting=csv.QUOTE_NONE, quotechar=None)
+          reader = utils.JsonDictWriter(fr, fieldnames=current_columns)
           for record in tqdm(reader, desc=f"[{resource.name}]: upgrading"):
             for column in add_columns:
               record[column] = None
