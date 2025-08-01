@@ -39,7 +39,7 @@ def upgrade():
         with resource_path.with_suffix('.tmp').open('w') as fw:
           writer = utils.JsonDictWriter(fw, fieldnames=schema_columns)
           writer.writeheader()
-          reader = utils.JsonDictWriter(fr, fieldnames=current_columns)
+          reader = utils.JsonDictReader(fr, fieldnames=current_columns)
           for record in tqdm(reader, desc=f"[{resource.name}]: upgrading"):
             for column in add_columns:
               record[column] = None
