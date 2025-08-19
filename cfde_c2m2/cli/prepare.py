@@ -70,6 +70,8 @@ def prepare():
         #
         resource_path.with_suffix('.get').unlink()
 
+    assert resource_path.with_suffix('.tmp').exists()
+    if resource_path.exists(): resource_path.unlink()
     resource_path.with_suffix('.tmp').rename(resource_path)
 
 cli.command()(prepare)
