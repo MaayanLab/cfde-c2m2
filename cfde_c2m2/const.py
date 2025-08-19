@@ -10,7 +10,7 @@ SCHEMA_FILENAME = 'C2M2_datapackage.json'
 INDEX_FILENAME = 'C2M2_datapackage.sqlite'
 PACKAGE_FILENAME = 'C2M2_datapackage.zip'
 
-OLS_URL = os.environ.get('CFDE_C2M2_OLS_URL', 'https://cfde-ols.k8s.dev.maayanlab.cloud')
+OLS_URL = os.environ.get('CFDE_C2M2_OLS_URL', 'https://ols.cfde.cloud')
 
 # TODO: if we bake this information into the C2M2_datapackage we won't need to update this library
 #       otherwise it *could* come from the OLS service as well
