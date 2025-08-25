@@ -13,7 +13,7 @@ A collection of utilities for simplifying the C2M2 submission process. If you pr
 **Submit:** Submits C2M2 datapackage to DRC portal (coming soon)
 
 ```bash
-pipx install 'cfde-c2m2@git+https://github.com/maayanlab/cfde-c2m2'
+pipx install cfde-c2m2
 
 # create an empty c2m2 submission OR update your existing submission directory
 cfde-c2m2 init
