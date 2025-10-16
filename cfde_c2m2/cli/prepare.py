@@ -37,6 +37,8 @@ def prepare():
       existing_iris = {
         row['id']: row.to_dict()
         for row in tqdm(resource.row_stream, desc=f"[{resource.name}]: loading existing IRIs...")
+        # ignore existing iris where only the id exists
+        if any(bool(value) for key, value in row.items() if key != 'id')
       }
     # process all unique iri metadata into the cv table
     with utils.OpenDictWriter(resource_path.with_suffix('.tmp'), fieldnames=[field.name for field in resource.schema.fields]) as writer:
