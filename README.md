@@ -14,6 +14,8 @@ A collection of utilities for simplifying the C2M2 submission process. If you pr
 
 ```bash
 pipx install cfde-c2m2
+# OR
+uv tool install cfde-c2m2
 
 # create an empty c2m2 submission OR update your existing submission directory
 cfde-c2m2 init
