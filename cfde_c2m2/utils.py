@@ -52,19 +52,62 @@ class JsonDictWriter(csv.DictWriter):
   def writerows(self, rowdicts):
     return super().writerows(({ k: maybe_json_dumps(v) for k, v in rowdict.items() } for rowdict in rowdicts))
 
-@contextlib.contextmanager
-def OpenDictWriter(file, *, fieldnames, writeheader=True, **kwargs):
-  with open(file, 'w') as fw:
-    writer = JsonDictWriter(fw, fieldnames=fieldnames, **kwargs)
-    if writeheader: writer.writeheader()
-    yield writer
+class OpenDictWriter:
+  def __init__(self, file, *, fieldnames, writeheader=True, **kwargs):
+    self.file = file
+    self.writeheader = writeheader
+    self.fieldnames = fieldnames
+    self.kwargs = kwargs
+    self.open()
 
-@contextlib.contextmanager
-def OpenDictReader(file, **kwargs):
-  with open(file, 'r') as fr:
-    fieldnames = fr.readline().rstrip('\r\n').split('\t')
-    reader = JsonDictReader(fr, fieldnames=fieldnames, **kwargs)
-    yield reader
+  def open(self):
+    self.fw = open(self.file, 'w')
+    self.writer = JsonDictWriter(self.fw, fieldnames=self.fieldnames, **self.kwargs)
+    if self.writeheader: self.writer.writeheader()
+    return self
+
+  def close(self):
+    self.fw.close()
+
+  def __enter__(self):
+    if self.fw.closed:
+      self.open()
+    return self
+
+  def __exit__(self, exc_type, exc_value, traceback):
+    self.close()
+  
+  def writerow(self, rowdict):
+    return self.writer.writerow(rowdict)
+
+  def writerows(self, rowdicts):
+    return self.writer.writerows(rowdicts)
+
+class OpenDictReader:
+  def __init__(self, file, **kwargs):
+    self.file = file
+    self.kwargs = kwargs
+    self.open()
+
+  def open(self):
+    self.fr = open(self.file, 'r')
+    self.fieldnames = self.fr.readline().rstrip('\r\n').split('\t')
+    self.reader = JsonDictReader(self.fr, fieldnames=self.fieldnames, **self.kwargs)
+    return self
+
+  def close(self):
+    self.fr.close()
+
+  def __enter__(self):
+    if self.fr.closed:
+      self.open()
+    return self
+
+  def __exit__(self, exc_type, exc_value, traceback):
+    self.close()
+
+  def __iter__(self):
+    return self.reader.__iter__()
 
 @contextlib.contextmanager
 def LazyDictWriters():
