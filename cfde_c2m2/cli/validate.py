@@ -1,6 +1,6 @@
 from cfde_c2m2.cli import cli
 from cfde_c2m2 import const, utils
-import cfde_c2m2.cli.unsimplify
+import cfde_c2m2.cli.check
 import os
 import sys
 import click
@@ -95,7 +95,7 @@ def validate_persistent_id_checksums(schema, index, max_errors=100):
 def validate():
   ''' Validate that your C2M2 submission is valid
   '''
-  cfde_c2m2.cli.unsimplify.unsimplify()
+  cfde_c2m2.cli.check.check()
   click.echo(f"Validating {const.SCHEMA_FILENAME}")
   subprocess.run(
     [sys.executable, '-m', 'frictionless', 'validate', const.SCHEMA_FILENAME],

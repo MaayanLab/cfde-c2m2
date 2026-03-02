@@ -1,15 +1,14 @@
 from cfde_c2m2.cli import cli
 from cfde_c2m2 import const, utils, ols
-import cfde_c2m2.cli.unsimplify
+import cfde_c2m2.cli.check
 import pathlib
-import click
 from tqdm import tqdm
 from frictionless import Package
 
 def prepare():
   ''' Finish preparing your c2m2 submission, filling in any blanks and resolving ontological identifiers
   '''
-  cfde_c2m2.cli.unsimplify.unsimplify()
+  cfde_c2m2.cli.check.check()
 
   # this package/package_schema business is a hack because once you open the context manager
   #   `with resource:` the schema gets broken and foreign keys go missing

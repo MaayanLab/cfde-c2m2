@@ -1,6 +1,6 @@
 from cfde_c2m2.cli import cli
 from cfde_c2m2 import const
-import cfde_c2m2.cli.unsimplify
+import cfde_c2m2.cli.check
 from frictionless import Package
 import click
 import shutil
@@ -12,7 +12,7 @@ from tqdm import tqdm
 def package(output):
   ''' Package your C2M2 submission
   '''
-  cfde_c2m2.cli.unsimplify.unsimplify()
+  cfde_c2m2.cli.check.check()
   package = Package(const.SCHEMA_FILENAME)
   with zipfile.ZipFile(pathlib.Path(output).with_suffix('.zip'), 'w', compression=zipfile.ZIP_DEFLATED, compresslevel=-1) as zf:
     for path in tqdm([const.SCHEMA_FILENAME]+[rc.path for rc in package.resources]):
