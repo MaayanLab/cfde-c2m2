@@ -8,7 +8,7 @@ import zipfile
 import pathlib
 from tqdm import tqdm
 
-@click.options('-o', '--output', type=click.Path(), default=const.PACKAGE_FILENAME, help='The name of your output zip file')
+@click.option('-o', '--output', type=click.Path(), default=const.PACKAGE_FILENAME, help='The name of your output zip file')
 def package(output):
   ''' Package your C2M2 submission
   '''
