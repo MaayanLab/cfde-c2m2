@@ -13,6 +13,16 @@ def sha256(file: pathlib.Path, chunk=8192):
       hash.update(buf)
   return hash.hexdigest()
 
+def chunked(it, chunk=8192):
+  buf = []
+  for el in it:
+    buf.append(el)
+    if len(buf) >= chunk:
+      yield buf
+      buf = []
+  if buf:
+    yield buf
+
 def ensure_list(L):
   if isinstance(L, list): return L
   else: return [L]

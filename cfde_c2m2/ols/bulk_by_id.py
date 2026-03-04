@@ -2,20 +2,21 @@
 '''
 import sys
 import requests
-from cfde_c2m2 import const
+from cfde_c2m2 import const, utils
 
 if __name__ == '__main__':
   _, ontology = sys.argv
-  req = requests.post(
-    f"{const.OLS_URL}/api/v1/bulk-by-id/{ontology}",
-    headers={
-      'Content-Type': 'text/tsv',
-      'Accept': 'text/tsv',
-    },
-    data=sys.stdin.buffer,
-    stream=True,
-  )
-  req.raise_for_status()
-  for chunk in req.iter_content(512):
-    sys.stdout.buffer.write(chunk)
-    sys.stdout.buffer.flush()
+  for chunk in utils.chunked(sys.stdin.buffer, 8192):
+    req = requests.post(
+      f"{const.OLS_URL}/api/v1/bulk-by-id/{ontology}",
+      headers={
+        'Content-Type': 'text/tsv',
+        'Accept': 'text/tsv',
+      },
+      data=b''.join(chunk),
+      stream=True,
+    )
+    req.raise_for_status()
+    for chunk in req.iter_content(8192):
+      sys.stdout.buffer.write(chunk)
+      sys.stdout.buffer.flush()
