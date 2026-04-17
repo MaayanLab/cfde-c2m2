@@ -2,20 +2,32 @@
 '''
 import sys
 import requests
-from cfde_c2m2 import const
+from cfde_c2m2 import const, utils
+
+# with this scheme packets will be sent ~1MB at a time
+#  chunk size is not strict since we break it up on line boundaries
+cs = 1<<20
 
 if __name__ == '__main__':
   _, ontology = sys.argv
-  req = requests.post(
-    f"{const.OLS_URL}/api/v1/bulk-by-id/{ontology}",
-    headers={
-      'Content-Type': 'text/tsv',
-      'Accept': 'text/tsv',
-    },
-    data=sys.stdin.buffer,
-    stream=True,
-  )
-  req.raise_for_status()
-  for chunk in req.iter_content(512):
-    sys.stdout.buffer.write(chunk)
-    sys.stdout.buffer.flush()
+  for i, chunk in enumerate(utils.chunked_read_lines(sys.stdin.buffer, cs)):
+    # try to retry in case of momentary service downtime during what is likely a long running process
+    @utils.run_with_retry()
+    def _(chunk=chunk):
+      req = requests.post(
+        f"{const.OLS_URL}/api/v1/bulk-by-id/{ontology}",
+        headers={
+          'Content-Type': 'text/tsv',
+          'Accept': 'text/tsv',
+        },
+        data=b''.join(chunk),
+        stream=True,
+      )
+      req.raise_for_status()
+      for j, chunk in enumerate(req.iter_content(cs)):
+        if i != 0 and j == 0:
+          # remove the first line (tsv header) after the first chunk
+          # assumes header is smaller than chunk size
+          _,_,chunk = chunk.partition(b'\n')
+        sys.stdout.buffer.write(chunk)
+        sys.stdout.buffer.flush()
