@@ -24,10 +24,8 @@ if __name__ == '__main__':
         stream=True,
       )
       req.raise_for_status()
-      for j, chunk in enumerate(req.iter_content(cs)):
-        if i != 0 and j == 0:
-          # remove the first line (tsv header) after the first chunk
-          # assumes header is smaller than chunk size
-          _,_,chunk = chunk.partition(b'\n')
-        sys.stdout.buffer.write(chunk)
-        sys.stdout.buffer.flush()
+      content = b''.join(req.iter_content(None))
+      if i != 0:
+        _,_,content = content.partition(b'\n')
+      sys.stdout.buffer.write(content)
+      sys.stdout.buffer.flush()
