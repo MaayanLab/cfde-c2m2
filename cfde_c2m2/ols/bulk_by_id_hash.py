@@ -1,4 +1,4 @@
-''' Not meant to be used directly, use with cfde_c2m2.ols:bulk_by_id
+''' Not meant to be used directly, use with cfde_c2m2.ols:bulk_by_id_hash
 '''
 import sys
 import requests
@@ -15,7 +15,7 @@ if __name__ == '__main__':
     @utils.run_with_retry()
     def _(chunk=chunk):
       req = requests.post(
-        f"{const.OLS_URL}/api/v1/bulk-by-id/{ontology}",
+        f"{const.OLS_URL}/api/v1/bulk-by-id-hash/{ontology}",
         headers={
           'Content-Type': 'text/tsv',
           'Accept': 'text/tsv',

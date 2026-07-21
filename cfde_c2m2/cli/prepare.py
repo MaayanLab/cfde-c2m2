@@ -5,6 +5,15 @@ import pathlib
 from tqdm import tqdm
 from frictionless import Package
 
+def compute_row_hash(row: dict) -> str:
+  import hashlib
+  import json
+  return hashlib.sha256(json.dumps({
+    k: v if type(v) == str else ('' if v is None else json.dumps(v))
+    for k, v in row.items()
+  }, sort_keys=True).encode()).hexdigest()
+
+
 def prepare():
   ''' Finish preparing your c2m2 submission, filling in any blanks and resolving ontological identifiers
   '''
@@ -43,16 +52,18 @@ def prepare():
         if rc_ids.exists():
           ids = set()
           to_get_any = False
-          with utils.OpenDictWriter(resource_path.with_suffix('.get'), fieldnames=['id'], writeheader=False) as to_get:
+          with utils.OpenDictWriter(resource_path.with_suffix('.get'), fieldnames=['id', 'hash'], writeheader=False) as to_get:
             with utils.OpenDictReader(f"{resource_name}.ids.tsv") as reader:
               for row in tqdm(reader, desc=f"[{op} {resource_name}]: preserving existing IRIs..."):
                 if str(row['id']) in ids: continue
                 if str(row['id']) in existing_iris:
-                  writer.writerow(existing_iris.pop(str(row['id'])))
+                  to_get_any = True
+                  to_get.writerow(dict(id=str(row['id']), hash=compute_row_hash(existing_iris[str(row['id'])])))
                 else:
                   # we don't have this one? we need to get it
                   to_get_any = True
-                  to_get.writerow(dict(id=str(row['id'])))
+                  to_get.writerow(dict(id=str(row['id']), hash=''))
+                  existing_iris[str(row['id'])] = {}
                 ids.add(str(row['id']))
             #
             rc_ids.unlink()
@@ -62,10 +73,13 @@ def prepare():
             # we submit the file of ids to the OLS API bulk-by-id endpoint
             #  it returns the records
             ontology = const.CV_TABLES()[resource_name]
-            writer.writerows(
-              {field.name: record.get(field.name, '') for field in package_schema.get_resource(resource_name).schema.fields}
-              for record in tqdm(ols.bulk_by_id(ontology, resource_path.with_suffix('.get')), desc=f"[{op} {resource_name}]: resolving new IRIs...")
-            )
+            fields = package_schema.get_resource(resource_name).schema.fields
+            for record in tqdm(ols.bulk_by_id(ontology, resource_path.with_suffix('.get')), desc=f"[{op} {resource_name}]: resolving new IRIs..."):
+              existing_iris.pop(record.get('id'), None)
+              writer.writerow({field.name: record.get(field.name, '') for field in fields})
+          #
+          # write remaining IRIs
+          writer.writerows({field.name: record.get(field.name, '') for field in fields} for record in existing_iris.values())
           #
           resource_path.with_suffix('.get').unlink()
 

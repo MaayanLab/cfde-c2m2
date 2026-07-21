@@ -11,7 +11,7 @@ def bulk_by_id(ontology: str, ids_file: pathlib.Path):
     proc = subprocess.Popen([
       sys.executable,
       '-m',
-      'cfde_c2m2.ols.bulk_by_id',
+      'cfde_c2m2.ols.bulk_by_id_hash',
       ontology,
     ], stdin=fr, stdout=subprocess.PIPE, stderr=sys.stderr)
     try:
@@ -20,6 +20,7 @@ def bulk_by_id(ontology: str, ids_file: pathlib.Path):
         line = proc.stdout.readline()
         if not line: break
         yield dict(zip(columns, line.decode().rstrip('\r\n').split('\t')))
+        print('+', dict(zip(columns, line.decode().rstrip('\r\n').split('\t'))), file=sys.stderr)
     except:
       proc.kill()
       raise
