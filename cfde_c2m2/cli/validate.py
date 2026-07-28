@@ -70,25 +70,25 @@ def validate_unique_persistent_ids(schema, index, max_errors=100):
     #
     return valid
 
-def validate_persistent_id_checksums(schema, index, max_errors=100):
+def validate_access_url_checksums(schema, index, max_errors=100):
   import sqlite3
   from frictionless import Package
   pkg = Package(schema)
   with sqlite3.connect(index) as con:
     cur = con.cursor()
     valid = True
-    # checking missing checksums when persistent_id is not
+    # checking missing checksums when access_url is not
     query = f"""
       select id_namespace, local_id
       from file
-      where persistent_id is not null
+      where access_url is not null
       and (sha256 is null and md5 is null)
       limit {max_errors}
       ;
     """
     for id_namespace, local_id in cur.execute(query):
       valid = False
-      click.echo(f"[file]: ({id_namespace}, {local_id}) checksum must be present for file with persistent_id defined")
+      click.echo(f"[file]: ({id_namespace}, {local_id}) checksum must be present for file with access_url defined")
     #
     return valid
 
@@ -116,8 +116,8 @@ def validate():
   click.echo(f"Validating uniqueness of persistent ids...")
   valid = validate_unique_persistent_ids(const.SCHEMA_FILENAME, const.INDEX_FILENAME) and valid
   #
-  click.echo(f"Validating checksums on files with persistent ids...")
-  valid = validate_persistent_id_checksums(const.SCHEMA_FILENAME, const.INDEX_FILENAME) and valid
+  click.echo(f"Validating checksums on files with access urls...")
+  valid = validate_access_url_checksums(const.SCHEMA_FILENAME, const.INDEX_FILENAME) and valid
   #
   if not valid:
     sys.exit(1)
