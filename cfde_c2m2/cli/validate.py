@@ -92,6 +92,27 @@ def validate_access_url_checksums(schema, index, max_errors=100):
     #
     return valid
 
+def validate_no_drs_persistent_id(schema, index, max_errors=100):
+  import sqlite3
+  from frictionless import Package
+  pkg = Package(schema)
+  with sqlite3.connect(index) as con:
+    cur = con.cursor()
+    valid = True
+    # check drs in persistent_id
+    query = f"""
+      select id_namespace, local_id
+      from file
+      where persistent_id like 'drs://%'
+      limit {max_errors}
+      ;
+    """
+    for id_namespace, local_id in cur.execute(query):
+      valid = False
+      click.echo(f"[file]: ({id_namespace}, {local_id}) persistent_id contains drs:// -- this belongs in access_url, see updated docs!")
+    #
+    return valid
+
 def validate():
   ''' Validate that your C2M2 submission is valid
   '''
@@ -118,6 +139,9 @@ def validate():
   #
   click.echo(f"Validating checksums on files with access urls...")
   valid = validate_access_url_checksums(const.SCHEMA_FILENAME, const.INDEX_FILENAME) and valid
+  #
+  click.echo(f"Validating drs is not in persistent_id...")
+  valid = validate_no_drs_persistent_id(const.SCHEMA_FILENAME, const.INDEX_FILENAME) and valid
   #
   if not valid:
     sys.exit(1)
