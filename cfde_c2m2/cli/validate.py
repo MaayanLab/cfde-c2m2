@@ -108,17 +108,18 @@ def validate():
     env=os.environ,
     check=True,
   )
+  valid = True
   #
   click.echo(f"Validating foreign key integrity...")
-  if not validate_fks(const.SCHEMA_FILENAME, const.INDEX_FILENAME):
-    sys.exit(1)
+  valid = validate_fks(const.SCHEMA_FILENAME, const.INDEX_FILENAME) and valid
   #
   click.echo(f"Validating uniqueness of persistent ids...")
-  if not validate_unique_persistent_ids(const.SCHEMA_FILENAME, const.INDEX_FILENAME):
-    sys.exit(1)
+  valid = validate_unique_persistent_ids(const.SCHEMA_FILENAME, const.INDEX_FILENAME) and valid
   #
   click.echo(f"Validating checksums on files with persistent ids...")
-  if not validate_persistent_id_checksums(const.SCHEMA_FILENAME, const.INDEX_FILENAME):
+  valid = validate_persistent_id_checksums(const.SCHEMA_FILENAME, const.INDEX_FILENAME) and valid
+  #
+  if not valid:
     sys.exit(1)
 
 cli.command()(validate)
