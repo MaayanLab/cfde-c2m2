@@ -5,7 +5,7 @@ try:
 except ImportError:
   pass
 
-SCHEMA_URL = os.environ.get('CFDE_C2M2_SCHEMA_URL', 'https://osf.io/download/3sra4/')
+SCHEMA_URL = os.environ.get('CFDE_C2M2_SCHEMA_URL', 'https://raw.githubusercontent.com/nih-cfde/published-documentation/refs/heads/stable/C2M2_schema/C2M2_datapackage.json')
 SCHEMA_FILENAME = 'C2M2_datapackage.json'
 INDEX_FILENAME = 'C2M2_datapackage.sqlite'
 PACKAGE_FILENAME = 'C2M2_datapackage.zip'
