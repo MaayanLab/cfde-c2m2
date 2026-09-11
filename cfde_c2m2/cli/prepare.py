@@ -63,7 +63,7 @@ def prepare():
                   # we don't have this one? we need to get it
                   to_get_any = True
                   to_get.writerow(dict(id=str(row['id']), hash=''))
-                  existing_iris[str(row['id'])] = {}
+                  existing_iris[str(row['id'])] = {'id': row['id']}
                 ids.add(str(row['id']))
             #
             rc_ids.unlink()
