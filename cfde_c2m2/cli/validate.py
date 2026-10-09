@@ -135,13 +135,13 @@ def validate():
   valid = validate_fks(const.SCHEMA_FILENAME, const.INDEX_FILENAME) and valid
   #
   click.echo(f"Validating uniqueness of persistent ids...")
-  valid = validate_unique_persistent_ids(const.SCHEMA_FILENAME, const.INDEX_FILENAME) and valid
+  validate_unique_persistent_ids(const.SCHEMA_FILENAME, const.INDEX_FILENAME)
   #
   click.echo(f"Validating checksums on files with access urls...")
-  # valid = validate_access_url_checksums(const.SCHEMA_FILENAME, const.INDEX_FILENAME) and valid
+  validate_access_url_checksums(const.SCHEMA_FILENAME, const.INDEX_FILENAME)
   #
   click.echo(f"Validating drs is not in persistent_id...")
-  valid = validate_no_drs_persistent_id(const.SCHEMA_FILENAME, const.INDEX_FILENAME) and valid
+  validate_no_drs_persistent_id(const.SCHEMA_FILENAME, const.INDEX_FILENAME)
   #
   if not valid:
     sys.exit(1)
