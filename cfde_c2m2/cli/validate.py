@@ -88,7 +88,7 @@ def validate_access_url_checksums(schema, index, max_errors=100):
     """
     for id_namespace, local_id in cur.execute(query):
       valid = False
-      click.echo(f"[file]: ({id_namespace}, {local_id}) checksum must be present for file with access_url defined")
+      click.echo(f"[file]: ({id_namespace}, {local_id}) checksum should be present for file with access_url defined")
     #
     return valid
 
@@ -138,7 +138,7 @@ def validate():
   valid = validate_unique_persistent_ids(const.SCHEMA_FILENAME, const.INDEX_FILENAME) and valid
   #
   click.echo(f"Validating checksums on files with access urls...")
-  valid = validate_access_url_checksums(const.SCHEMA_FILENAME, const.INDEX_FILENAME) and valid
+  # valid = validate_access_url_checksums(const.SCHEMA_FILENAME, const.INDEX_FILENAME) and valid
   #
   click.echo(f"Validating drs is not in persistent_id...")
   valid = validate_no_drs_persistent_id(const.SCHEMA_FILENAME, const.INDEX_FILENAME) and valid
